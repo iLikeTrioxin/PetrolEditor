@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.16)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+project(PetrolEditor)
+
+set(USE_ADDONS Assimp Bullet Core ENet Freetype GLFW ImGui OpenAL OpenGL SSD1306 Static)
+
+File(GLOB_RECURSE   SOURCE_FILES PetrolEditor/Source/*.cpp )
+File(GLOB_RECURSE   HEADER_FILES PetrolEditor/Source/*.h   )
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -flto")
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_DEBUG} -S -fverbose-asm")
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_DEBUG} -S -fverbose-asm")
+
+#set( CMAKE_APPLE_SILICON_PROCESSOR         ON  CACHE BOOL "xxx" FORCE )
+
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/PetrolEditor FILES ${SOURCE_FILES} ${HEADER_FILES} ${RESOURCE_FILES})
+
+# for entt
+add_compile_definitions(NOMINMAX)
+
+add_subdirectory(Deps)
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -O0")
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY $<1:${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}/${PETROLEDITOR_BUILD_NAME}>)
+
+#file(COPY PetrolEditor/Resources DESTINATION ${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}/${PETROLEDITOR_BUILD_NAME})
+
+add_executable(PetrolEditor ${SOURCE_FILES} ${HEADER_FILES})
+target_include_directories(PetrolEditor PRIVATE attrsIncludeDir)
+#target_compile_features(PetrolEngine PUBLIC cxx_std_23)
+#target_compile_features(Hei PUBLIC cxx_std_23)
+
+target_compile_options(PetrolEditor PUBLIC -fno-rtti)
+
+add_compile_definitions(PetrolEditor PUBLIC DEBUG)
+
+target_link_libraries(PetrolEditor PUBLIC PetrolEngine ${STATIC_LIBS})
+target_include_directories(PetrolEditor PUBLIC ${PETROL_ENGINE_INCLUDE})
+implement_attributes(PetrolEditor)
+
+if(WIN32 OR MINGW OR ("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows") )
+    target_compile_options(PetrolEditor PUBLIC -static -Wl,.)
+    target_link_libraries (PetrolEditor PUBLIC mingw32)
+    message("using MINGW!!! YAY!!! ${CMAKE_SYSTEM_NAME}")
+elseif(UNIX)
+    target_link_libraries (PetrolEditor PUBLIC pthread dl)
+    target_compile_options(PetrolEditor PUBLIC -Wl,-rpath -Wl,.)
+endif()
+
